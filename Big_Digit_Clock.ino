@@ -166,6 +166,8 @@ void setup() {
 void loop() {
   uint8_t uiButtons = buttonsReleased();
 
+  playAlarm();                                                                          // Play the alarm.
+
   if (uiButtons & BUTTON_UP) {
     menu.moveUp();                                                                      // If UP was pressed, move the menu up.
   }
@@ -199,12 +201,14 @@ void loop() {
 
     lcd.setCursor(0,0);                                                                 // Set the cursor to 0,0
     TimeToLCD(LocalTime(last), isTimerRunning());                                       // Write the time to the LCD
-    if (isTimerOff()) {
-      TimeToBigDigits(LocalTime(last));
-    } else if (isTimerOn()) {
-      TimeToBigDigits(dtTimerEnd - last);
-    } else if (isTimerExpired()) {
-      TimeToBigDigits(last - dtTimerEnd);
+    if (isTimerOff() ||                                                                 // If the timer is off,
+        LocalTime(last).second() == 0 ||                                                // or the seconds of the time is 0,
+        LocalTime(last).second() == 30) {                                               // or the seconds of the time is 30,
+      TimeToBigDigits(LocalTime(last));                                                 // write the actual time,
+    } else if (isTimerOn()) {                                                           // else if the timer is running
+      TimeToBigDigits(dtTimerEnd - last);                                               // write the remaining time,
+    } else if (isTimerExpired()) {                                                      // else if the timer has expired
+      TimeToBigDigits(last - dtTimerEnd);                                               // write how long it's been since it expired
     }
 
     if (last.minute() == 30 && last.second() <= 1) {                                    // If it is in the first two seconds of the half hour (e.g. XX:30:00 - XX:30:01)...
@@ -218,7 +222,6 @@ void loop() {
     TimerExpire();                                                                      // set the timer to expired...
     startAlarm();                                                                       // start the alarm.
   }
-  playAlarm();                                                                          // Play the alarm.
   Watchdog.reset();                                                                     // Reset the watchdog
 }
 
