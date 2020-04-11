@@ -19,7 +19,7 @@ const uint8_t BL_WHITE = 0x7;
 #define APP_NAME ("BIG CLOCK")
 const uint8_t APP_MAJOR = 1;
 const uint8_t APP_MINOR = 0;
-const uint8_t APP_REV = 0;
+const uint8_t APP_REV = 2;
 
 const uint8_t BUZZER_PIN = 9;
 const uint8_t DATA_PIN  = 5;
@@ -202,8 +202,10 @@ void loop() {
     lcd.setCursor(0,0);                                                                 // Set the cursor to 0,0
     TimeToLCD(LocalTime(last), isTimerRunning());                                       // Write the time to the LCD
     if (isTimerOff() ||                                                                 // If the timer is off,
-        LocalTime(last).second() == 0 ||                                                // or the seconds of the time is 0,
-        LocalTime(last).second() == 30) {                                               // or the seconds of the time is 30,
+        (dtTimerEnd - last).seconds() == 0 ||                                           // or the seconds of the timer is 0,
+        (dtTimerEnd - last).seconds() == 30) {                                          // or the seconds of the timer is 30,
+//        LocalTime(last).second() == 0 ||                                                // or the seconds of the time is 0,
+//        LocalTime(last).second() == 30) {                                               // or the seconds of the time is 30,
       TimeToBigDigits(LocalTime(last));                                                 // write the actual time,
     } else if (isTimerOn()) {                                                           // else if the timer is running
       TimeToBigDigits(dtTimerEnd - last);                                               // write the remaining time,
