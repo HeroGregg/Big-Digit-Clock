@@ -19,7 +19,7 @@ const uint8_t BL_WHITE = 0x7;
 #define APP_NAME ("BIG CLOCK")
 const uint8_t APP_MAJOR = 1;
 const uint8_t APP_MINOR = 0;
-const uint8_t APP_REV = 2;
+const uint8_t APP_REV = 3;
 
 const uint8_t BUZZER_PIN = 9;
 const uint8_t DATA_PIN  = 5;
@@ -55,6 +55,8 @@ struct ConfigSettings_t {
   TimeSpan tsTimer;
   DateTime dtDisplayOff;
   DateTime dtDisplayOn;
+
+  int8_t RTCCorrectionOffset;
 };
 //ConfigSettings_t configDefaults = {
 ConfigSettings_t configSettings = {
@@ -70,7 +72,8 @@ ConfigSettings_t configSettings = {
   -5,
   TimeSpan(0,0,15,0),
   DateTime(2017,1,1,1,0,0),
-  DateTime(2017,1,1,6,0,0)
+  DateTime(2017,1,1,6,0,0),
+  22
 };
 
 //====================================================================================================
@@ -108,6 +111,7 @@ MenuBackend menu = MenuBackend(menuUseEvent,menuChangeEvent);
     MenuItem dstEndMonth    = MenuItem(menu, "DST End Month", 2);
     MenuItem dstEndSunday   = MenuItem(menu, "DST End Sun", 2);
     MenuItem nonDSTOffset   = MenuItem(menu, "Std Offset", 2);
+    MenuItem RTCCorrection  = MenuItem(menu, "RTC Correction", 2);
     MenuItem dstSave        = MenuItem(menu, "Save Config", 3);
     MenuItem dstCancel      = MenuItem(menu, "Discard Changes", 3);
 
@@ -134,10 +138,10 @@ enum TimerState { Off, On, Expired };
 void setup() {
   setupMenu();
   setupSerial();
+  readEEPROMConfig();
   setupLCD();
   setupRTC();
   setupBigDigitPins();
-  readEEPROMConfig();
   initTimeVariables();
 
   updateLCDMenu();
@@ -314,6 +318,8 @@ void readEEPROMConfig() {
     configSettings = readConfigSettings;
   }
 
+  rtc.calibrate(PCF8523_OneMinute,configSettings.RTCCorrectionOffset);
+
   Serial.print(F("Major Version: "));
   Serial.println(configSettings.ConfigMajorVersion);
   Serial.print(F("Minor Version: "));
@@ -348,6 +354,9 @@ void readEEPROMConfig() {
   Serial.println(configSettings.dtDisplayOn.hour());
   Serial.print(F("Display On Minute: "));
   Serial.println(configSettings.dtDisplayOn.minute());
+  Serial.print(F("RTC Fast Correction Offset: "));
+  Serial.println(configSettings.RTCCorrectionOffset);
+
 
 //  Serial.print(F("Free RAM 5: "));
 //  Serial.println(free_ram());
@@ -408,7 +417,8 @@ void setupMenu() {
     dstOffset.addAfter(dstEndMonth);
     dstEndMonth.addAfter(dstEndSunday);
     dstEndSunday.addAfter(nonDSTOffset);
-    nonDSTOffset.addAfter(dstSave);
+    nonDSTOffset.addAfter(RTCCorrection);
+    RTCCorrection.addAfter(dstSave);
     dstSave.addAfter(dstCancel);
     dstSave.addLeft(configuration);
     dstCancel.addLeft(configuration);
@@ -994,6 +1004,7 @@ void menuUseEvent(MenuUseEvent used) {
     dstEndMonth.setValue(configSettings.DSTEndMonth);
     dstEndSunday.setValue(configSettings.DSTEndSunday);
     nonDSTOffset.setValue(configSettings.StandardOffset);
+    RTCCorrection.setValue(configSettings.RTCCorrectionOffset);
   }
   if (used.item.isEqual(dstSave)) {
     configSettings.dtDisplayOff = DateTime(configSettings.dtDisplayOff.year(), configSettings.dtDisplayOff.month(), configSettings.dtDisplayOff.day(), cfgDispOffHour.getValue(), cfgDispOffMin.getValue(), configSettings.dtDisplayOff.second());
@@ -1004,6 +1015,10 @@ void menuUseEvent(MenuUseEvent used) {
     configSettings.DSTEndMonth = dstEndMonth.getValue();
     configSettings.DSTEndSunday = dstEndSunday.getValue();
     configSettings.StandardOffset = nonDSTOffset.getValue();
+    configSettings.RTCCorrectionOffset = RTCCorrection.getValue();
+    
+    rtc.calibrate(PCF8523_OneMinute,configSettings.RTCCorrectionOffset);
+
     writeEEPROMConfig();
   }
 }
