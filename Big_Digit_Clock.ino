@@ -6,6 +6,7 @@
 #include <EEPROM.h>
 #include <MenuBackend.h>
 #include <Adafruit_SleepyDog.h>
+#include <avr/pgmspace.h>
 
 const uint8_t BL_OFF = 0x0;
 const uint8_t BL_RED = 0x1;
@@ -71,10 +72,82 @@ ConfigSettings_t configSettings = {
   1,
   -5,
   TimeSpan(0,0,15,0),
-  DateTime(2017,1,1,1,0,0),
-  DateTime(2017,1,1,6,0,0),
+  DateTime(2017,1,1,4,0,0),
+  DateTime(2017,1,1,4,1,0),
   22
 };
+
+
+//====================================================================================================
+// Menu Strings
+//====================================================================================================
+//                                              "123456789 123456"
+  const char mtext_timerStartStop[] PROGMEM   = {"Start/Stop Timer"};
+  const char mtext_timerMenu[] PROGMEM        = "Timer";
+    const char mtext_timerHour[] PROGMEM      = "Hours";
+    const char mtext_timerMinute[] PROGMEM    = "Minutes";
+    const char mtext_timerSecond[] PROGMEM    = "Seconds";
+    const char mtext_timerSave[] PROGMEM      = "Save Timer";
+    const char mtext_timerCancel[] PROGMEM    = "Discard Changes";
+  const char mtext_configTime[] PROGMEM       = "Time and Date";
+    const char mtext_setHour[] PROGMEM        = "Hour";
+    const char mtext_setMinute[] PROGMEM      = "Minute";
+    const char mtext_setSecond[] PROGMEM      = "Second";
+    const char mtext_setYear[] PROGMEM        = "Year";
+    const char mtext_setMonth[] PROGMEM       = "Month";
+    const char mtext_setDay[] PROGMEM         = "Day";
+    const char mtext_timeSave[] PROGMEM       = "Save Date/Time";
+    const char mtext_timeCancel[] PROGMEM     = "Discard Changes";
+  const char mtext_configuration[] PROGMEM    = "Config";
+    const char mtext_cfgDispOffHour[] PROGMEM = "Disp Off Hour";
+    const char mtext_cfgDispOffMin[] PROGMEM  = "Disp Off Min";
+    const char mtext_cfgDispOnHour[] PROGMEM  = "Disp On Hour";
+    const char mtext_cfgDispOnMin[] PROGMEM   = "Disp On Min";
+    const char mtext_dstStartMonth[] PROGMEM  = "DST Start Mon";
+    const char mtext_dstStartSunday[] PROGMEM = "DST Start Sun";
+    const char mtext_dstOffset[] PROGMEM      = "DST Offset";
+    const char mtext_dstEndMonth[] PROGMEM    = "DST End Month";
+    const char mtext_dstEndSunday[] PROGMEM   = "DST End Sun";
+    const char mtext_nonDSTOffset[] PROGMEM   = "Std Offset";
+    const char mtext_RTCCorrection[] PROGMEM  = "RTC Correct";
+    const char mtext_dstSave[] PROGMEM        = "Save Config";
+    const char mtext_dstCancel[] PROGMEM      = "Discard Changes";
+
+PGM_P const mLabels[] PROGMEM = 
+{
+  mtext_timerStartStop,
+  mtext_timerMenu,
+  mtext_timerHour,
+  mtext_timerMinute,
+  mtext_timerSecond,
+  mtext_timerSave,
+  mtext_timerCancel,
+  mtext_configTime,
+  mtext_setHour,
+  mtext_setMinute,
+  mtext_setSecond,
+  mtext_setYear,
+  mtext_setMonth,
+  mtext_setDay,
+  mtext_timeSave,
+  mtext_timeCancel,
+  mtext_configuration,
+  mtext_cfgDispOffHour,
+  mtext_cfgDispOffMin,
+  mtext_cfgDispOnHour,
+  mtext_cfgDispOnMin,
+  mtext_dstStartMonth,
+  mtext_dstStartSunday,
+  mtext_dstOffset,
+  mtext_dstEndMonth,
+  mtext_dstEndSunday,
+  mtext_nonDSTOffset,
+  mtext_RTCCorrection,
+  mtext_dstSave,
+  mtext_dstCancel
+};
+
+char menuCharBuffer[16];  // make sure this is large enough for the largest string it must hold
 
 //====================================================================================================
 // Menu Variables
@@ -83,37 +156,36 @@ void menuUseEvent(MenuUseEvent used);
 void menuChangeEvent(MenuChangeEvent changed);
 
 MenuBackend menu = MenuBackend(menuUseEvent,menuChangeEvent);
-//                                           "123456789 123456"
-  MenuItem timerStartStop   = MenuItem(menu, "Start/Stop Timer", 1);
-  MenuItem timerMenu        = MenuItem(menu, "Timer", 1);
-    MenuItem timerHour      = MenuItem(menu, "Hours", 2);
-    MenuItem timerMinute    = MenuItem(menu, "Minutes", 2);
-    MenuItem timerSecond    = MenuItem(menu, "Seconds", 2);
-    MenuItem timerSave      = MenuItem(menu, "Save Timer", 3);
-    MenuItem timerCancel    = MenuItem(menu, "Discard Changes", 3);
-  MenuItem configTime       = MenuItem(menu, "Time and Date", 1);
-    MenuItem setHour        = MenuItem(menu, "Hour", 2);
-    MenuItem setMinute      = MenuItem(menu, "Minute", 2);
-    MenuItem setSecond      = MenuItem(menu, "Second", 2);
-    MenuItem setYear        = MenuItem(menu, "Year", 2);
-    MenuItem setMonth       = MenuItem(menu, "Month", 2);
-    MenuItem setDay         = MenuItem(menu, "Day", 2);
-    MenuItem timeSave       = MenuItem(menu, "Save Date/Time", 3);
-    MenuItem timeCancel     = MenuItem(menu, "Discard Changes", 3);
-  MenuItem configuration    = MenuItem(menu, "Config", 1);
-    MenuItem cfgDispOffHour = MenuItem(menu, "Disp Off Hour", 2);
-    MenuItem cfgDispOffMin  = MenuItem(menu, "Disp Off Min", 2);
-    MenuItem cfgDispOnHour  = MenuItem(menu, "Disp On Hour", 2);
-    MenuItem cfgDispOnMin   = MenuItem(menu, "Disp On Min", 2);
-    MenuItem dstStartMonth  = MenuItem(menu, "DST Start Mon", 2);
-    MenuItem dstStartSunday = MenuItem(menu, "DST Start Sun", 2);
-    MenuItem dstOffset      = MenuItem(menu, "DST Offset", 2);
-    MenuItem dstEndMonth    = MenuItem(menu, "DST End Month", 2);
-    MenuItem dstEndSunday   = MenuItem(menu, "DST End Sun", 2);
-    MenuItem nonDSTOffset   = MenuItem(menu, "Std Offset", 2);
-    MenuItem RTCCorrection  = MenuItem(menu, "RTC Correction", 2);
-    MenuItem dstSave        = MenuItem(menu, "Save Config", 3);
-    MenuItem dstCancel      = MenuItem(menu, "Discard Changes", 3);
+  MenuItem timerStartStop   = MenuItem(menu, 0, 1);
+  MenuItem timerMenu        = MenuItem(menu, 1, 1);
+    MenuItem timerHour      = MenuItem(menu, 2, 2);
+    MenuItem timerMinute    = MenuItem(menu, 3, 2);
+    MenuItem timerSecond    = MenuItem(menu, 4, 2);
+    MenuItem timerSave      = MenuItem(menu, 5, 3);
+    MenuItem timerCancel    = MenuItem(menu, 6, 3);
+  MenuItem configTime       = MenuItem(menu, 7, 1);
+    MenuItem setHour        = MenuItem(menu, 8, 2);
+    MenuItem setMinute      = MenuItem(menu, 9, 2);
+    MenuItem setSecond      = MenuItem(menu, 10, 2);
+    MenuItem setYear        = MenuItem(menu, 11, 2);
+    MenuItem setMonth       = MenuItem(menu, 12, 2);
+    MenuItem setDay         = MenuItem(menu, 13, 2);
+    MenuItem timeSave       = MenuItem(menu, 14, 3);
+    MenuItem timeCancel     = MenuItem(menu, 15, 3);
+  MenuItem configuration    = MenuItem(menu, 16, 1);
+    MenuItem cfgDispOffHour = MenuItem(menu, 17, 2);
+    MenuItem cfgDispOffMin  = MenuItem(menu, 18, 2);
+    MenuItem cfgDispOnHour  = MenuItem(menu, 19, 2);
+    MenuItem cfgDispOnMin   = MenuItem(menu, 20, 2);
+    MenuItem dstStartMonth  = MenuItem(menu, 21, 2);
+    MenuItem dstStartSunday = MenuItem(menu, 22, 2);
+    MenuItem dstOffset      = MenuItem(menu, 23, 2);
+    MenuItem dstEndMonth    = MenuItem(menu, 24, 2);
+    MenuItem dstEndSunday   = MenuItem(menu, 25, 2);
+    MenuItem nonDSTOffset   = MenuItem(menu, 26, 2);
+    MenuItem RTCCorrection  = MenuItem(menu, 27, 2);
+    MenuItem dstSave        = MenuItem(menu, 28, 3);
+    MenuItem dstCancel      = MenuItem(menu, 29, 3);
 
 //====================================================================================================
 // Alarm Variables
@@ -417,6 +489,7 @@ void setupMenu() {
     dstOffset.addAfter(dstEndMonth);
     dstEndMonth.addAfter(dstEndSunday);
     dstEndSunday.addAfter(nonDSTOffset);
+//    nonDSTOffset.addAfter(dstSave);
     nonDSTOffset.addAfter(RTCCorrection);
     RTCCorrection.addAfter(dstSave);
     dstSave.addAfter(dstCancel);
@@ -924,7 +997,10 @@ void TimeToLCD(DateTime dtTime, boolean bTimer) {
 //====================================================================================================
 void updateLCDMenu() {
   lcd.setCursor(0,1);
-  lcd.print(menu.getCurrent().getName());
+//  Serial.print(F("Menu Item: "));
+  strcpy_P(menuCharBuffer, (char *)pgm_read_word(&(mLabels[(int)menu.getCurrent().getName()])));
+//  Serial.println(menuCharBuffer);
+  lcd.print(menuCharBuffer);
   if (menu.getCurrent().getLevel() == 2) {
     lcd.print(F(" "));
     lcd.print(menu.getCurrent().getValue());
